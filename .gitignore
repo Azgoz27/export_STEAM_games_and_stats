@@ -1,2 +1,8 @@
 game_data.json
 game_data.csv
+owned_games_steam_data.json
+owned_games_steam_data.csv
+user_level_steam_data.json
+user_level_steam_data.csv
+recently_played_steam_data.json
+recently_played_steam_data.csv
