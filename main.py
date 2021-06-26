@@ -9,8 +9,10 @@ if __name__ == '__main__':
     # To return owned games in STEAM form the URL with the following strings
     steamLink = 'http://api.steampowered.com/'
     ownedGames = 'IPlayerService/GetOwnedGames/v1?'
-    steamKey = '&key='
-    steamID = '&steamid='
+    # Put in your Steam Key
+    steamKey = '&key=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+    # Put in your Steam ID
+    steamID = '&steamid=XXXXXXXXXXXXXXXXX'
     textFormat = '&format=json'
     appInfo ='&include_appinfo=True'
     freeGames ='&include_played_free_games=True'
