@@ -6,6 +6,10 @@ os.getcwd()
 
 if __name__ == '__main__':
 
+    def exportJSON(file, name):
+        with open(name + '_data.json', 'w', encoding='utf-8') as jsonfile:
+            json.dump(file, jsonfile, ensure_ascii=False, indent=4)
+
     # To return owned games in STEAM form the URL with the following strings
     steamLink = 'http://api.steampowered.com/'
     ownedGames = 'IPlayerService/GetOwnedGames/v1?'
@@ -25,14 +29,7 @@ if __name__ == '__main__':
                              + textFormat
                              + appInfo
                              + freeGames)
-
-    # Export in JSON file
-    with open('owned_games_steam_data.json', 'w', encoding='utf-8') as jsonfile:
-        json.dump(getOwnedGames.json(), jsonfile, ensure_ascii=False, indent=4)
-
-
-    # # Return reviews of owned STEAM games in JSON
-    # response2 = requests.get('https://store.steampowered.com/appreviews/252950?json=1&language=all')
+    exportJSON(getOwnedGames.json(), name='owned_games_steam')
 
 
     # OPTIONAL: Get the STEAM level and badge level of the user
@@ -41,21 +38,25 @@ if __name__ == '__main__':
 
     getSteamLevel = requests.get(steamLink + steamLevel + steamID + steamKey)
     getBadgeLevel = requests.get(steamLink + badgeLevel + steamID + steamKey)
-
-    # Export in JSON file
-    with open('user_level_steam_data.json', 'w', encoding='utf-8') as jsonfile:
-        json.dump([getSteamLevel.json(),getBadgeLevel.json()], jsonfile, ensure_ascii=False, indent=4)
+    exportJSON([getSteamLevel.json(),getBadgeLevel.json()], name='user_level_steam')
 
 
     # OPTIONAL: Get recently played STEAM games
     recentlyPlayed = 'IPlayerService/GetRecentlyPlayedGames/v1?'
 
     getRecentlyPlayed = requests.get(steamLink + recentlyPlayed + steamID + steamKey)
+    exportJSON(getRecentlyPlayed.json(), name='recently_played_steam')
 
-    # Export in JSON file
-    with open('recently_played_steam_data.json', 'w', encoding='utf-8') as jsonfile:
-        json.dump(getRecentlyPlayed.json(), jsonfile, ensure_ascii=False, indent=4)
 
+
+    # Return reviews of owned STEAM games in JSON
+    gameID = '238960'
+
+    getGameReview = requests.get('https://store.steampowered.com/appreviews/' + gameID + '?json=1&language=all&purchase_type=all')
+    exportJSON(getGameReview.json(), name='game_review')
+    # &review_type=positive
+
+    # getGameDetails = requests.get('https://store.steampowered.com/api/appdetails?appids=' + gameID)
 
 
     # with open('data.json') as jsonfile:
