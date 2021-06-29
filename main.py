@@ -2,6 +2,7 @@ import requests
 import json
 import csv
 import os
+from hltbapi import HtmlScraper
 os.getcwd()
 
 if __name__ == '__main__':
@@ -21,16 +22,9 @@ if __name__ == '__main__':
     appInfo ='&include_appinfo=True'
     freeGames ='&include_played_free_games=True'
 
-    # Return owned STEAM games in JSON
-    getOwnedGames = requests.get(steamLink
-                             + ownedGames
-                             + steamKey
-                             + steamID
-                             + textFormat
-                             + appInfo
-                             + freeGames)
+    # Return owned STEAM games list
+    getOwnedGames = requests.get(steamLink + ownedGames + steamKey + steamID + textFormat + appInfo + freeGames)
     exportJSON(getOwnedGames.json(), name='owned_games_steam')
-
 
     # OPTIONAL: Get the STEAM level and badge level of the user
     steamLevel ='IPlayerService/GetSteamLevel/v1?'
@@ -40,21 +34,35 @@ if __name__ == '__main__':
     getBadgeLevel = requests.get(steamLink + badgeLevel + steamID + steamKey)
     exportJSON([getSteamLevel.json(),getBadgeLevel.json()], name='user_level_steam')
 
-
     # OPTIONAL: Get recently played STEAM games
     recentlyPlayed = 'IPlayerService/GetRecentlyPlayedGames/v1?'
 
     getRecentlyPlayed = requests.get(steamLink + recentlyPlayed + steamID + steamKey)
     exportJSON(getRecentlyPlayed.json(), name='recently_played_steam')
 
+    # Return review numbers of owned STEAM games
+    gameID = '289070'
 
-
-    # Return reviews of owned STEAM games in JSON
-    gameID = '238960'
-
-    getGameReview = requests.get('https://store.steampowered.com/appreviews/' + gameID + '?json=1&language=all&purchase_type=all')
+    getGameReview = requests.get('https://store.steampowered.com/appreviews/' + gameID +\
+                                 '?json=1&language=all&purchase_type=all')     # &review_type=positive
     exportJSON(getGameReview.json(), name='game_review')
-    # &review_type=positive
+
+    # Scrap expected game times per play style from How Long to Beat website
+    howLongToBeat = HtmlScraper().search(name="Sid Meier's Civilization VI")
+    gameLengthList = []
+    for entry in howLongToBeat:
+        gameLengths = [entry.gameplayMain, entry.gameplayMainExtra, entry.gameplayCompletionist]
+        gameLengthTotal = dict(zip(entry.timeLabels, gameLengths))
+        hoursPerTitle = [entry.gameName, gameLengthTotal]
+        gameLengthList.append(hoursPerTitle)
+        print(hoursPerTitle)
+
+        with open('HowLongToBeat.txt', 'w', encoding='utf-8') as textfile:
+            textfile.write(str(gameLengthList))
+
+
+
+
 
     # getGameDetails = requests.get('https://store.steampowered.com/api/appdetails?appids=' + gameID)
 
