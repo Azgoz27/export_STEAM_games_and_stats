@@ -1,5 +1,3 @@
-game_data.json
-game_data.csv
 owned_games_steam_data.json
 owned_games_steam_data.csv
 user_level_steam_data.json
@@ -9,3 +7,7 @@ recently_played_steam_data.csv
 game_review_data.json
 game_review_data.csv
 HowLongToBeat.txt
+game_details_data.json
+game_details_data.csv
+game_list_data.json
+game_list_data.csv
