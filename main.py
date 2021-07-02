@@ -3,10 +3,13 @@ import json
 import csv
 import os
 import math
+import re
 from hltbapi import HtmlScraper
 os.getcwd()
 
 if __name__ == '__main__':
+    # Regex of keywords for HLTB game name search
+    keyWords = 'Single Player|Multi-Player|Multiplayer|&|:|-|Steam|Beta|The|Edition|Deluxe|Premium'
 
     # Export file to JSON
     def exportJSON(file, name):
@@ -19,24 +22,37 @@ if __name__ == '__main__':
                             + gameID
                             + '?json=1&language=all&purchase_type=all').json())         # &review_type=positive
         totalVotes = gameReviews['query_summary']['total_reviews']
-        totalPositive = gameReviews['query_summary']['total_positive']
-        totalNegative = gameReviews['query_summary']['total_negative']
-        reviewScore = totalPositive/totalVotes
-        rating = reviewScore-(reviewScore-0.5) * math.pow(2, - math.log10(totalVotes + 1))
-        return(' Total Votes: ' + str(totalVotes) + ', '
-               + ' Total Positive: ' + str(totalPositive) + ', '
-               + ' Total Negative: ' + str(totalNegative) + ', '
-               + ' Steam Score(%): ' + str(round(reviewScore*100)) + ', '
-               + ' Steam db Score(%): ' + str(round(rating*100))
-               )
+        if totalVotes != 0:
+            totalPositive = gameReviews['query_summary']['total_positive']
+            totalNegative = gameReviews['query_summary']['total_negative']
+            reviewScore = totalPositive/totalVotes
+            rating = reviewScore-(reviewScore-0.5) * math.pow(2, - math.log10(totalVotes + 1))
+            return(' Total Votes: ' + str(totalVotes) + ', '
+                   + ' Total Positive: ' + str(totalPositive) + ', '
+                   + ' Total Negative: ' + str(totalNegative) + ', '
+                   + ' Score(%): ' + str(round(reviewScore*100)) + ', '
+                   + ' Steam db Score(%): ' + str(round(rating*100))
+                   )
+        else:
+            return (' Total Votes: 0, Total Positive: 0, Total Negative: 0, Score(%): 0, Steam db Score(%): 0')
 
     # Scrap expected game length times per play style from How Long to Beat website
     def getHowLongToBeat(name):
-        howLongToBeat = HtmlScraper().search(name)[0]
-        gameLengths = 'Main Story(h): ' + str(howLongToBeat.gameplayMain) + ', '\
-                      + 'Extra(h): ' + str(howLongToBeat.gameplayMainExtra) + ', '\
-                      + 'Complete(h): ' + str(howLongToBeat.gameplayCompletionist) + ', '
-        return str(gameLengths)
+        # Using regex to exclude mismatches between steam and HLTB game names
+        name = re.sub(keyWords, ' ', name)
+        # Remove utf-8 coded text for better search results
+        encodeName = name.encode(encoding='ascii', errors='ignore')
+        decodeName = encodeName.decode()
+        try:
+            howLongToBeat = HtmlScraper().search(decodeName)[0]
+            gameLengths = 'Main Story(h): ' + str(howLongToBeat.gameplayMain) + ', ' \
+                          + 'Extra(h): ' + str(howLongToBeat.gameplayMainExtra) + ', ' \
+                          + 'Complete(h): ' + str(howLongToBeat.gameplayCompletionist) + ', '
+            print(decodeName + ' -> ' + howLongToBeat.gameName)
+            return str(gameLengths)
+        except:
+            print("\nERROR!!!! " + decodeName)
+            return 'Main Story(h): err, Extra(h): err, Complete(h): err, '
 
     # To return owned games in STEAM form the URL with the following strings
     steamLink = 'http://api.steampowered.com/'
@@ -54,12 +70,11 @@ if __name__ == '__main__':
                                   + freeGames)).json()
     exportJSON(getOwnedGames, name='owned_games_steam')
 
-
     # Get the total count of Steam games
     gamesTotal = "Total Steam game count: " + str(getOwnedGames['response']['game_count'])
+
     # Get the game IDs, names, total playtime per title, total vote numbers, total positive and negative numbers
     gameItems = []
-
     for count, item in enumerate(getOwnedGames['response']['games'], 1):
         gameItems.append(str(count) + ', '
                          + 'ID: ' + str(item['appid']) + ', '
@@ -69,12 +84,14 @@ if __name__ == '__main__':
                          + str(getGameReviews(str(item['appid'])))
                          )
 
-        print(gameItems)
-
-
     # Export to JSON file
     exportJSON((gamesTotal, gameItems), name='game_list')
 
+    # Export to CSV file
+    with open('game_list_data.csv', 'w', encoding='UTF8', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(gamesTotal)
+        writer.writerows(gameItems)
 
 
     # OPTIONAL: Get the STEAM level and badge level of the user
@@ -93,26 +110,6 @@ if __name__ == '__main__':
 
     #OPTIONAL: Get game's Steam page details
     gamePageID = '12370'
+
     getGameDetails = requests.get('https://store.steampowered.com/api/appdetails?appids=' + gamePageID)
     exportJSON(getGameDetails.json(), name='game_details')
-
-
-
-
-    # dataFileCsv = open('data.csv', 'w', newline='')
-    # csvWriter = csv.writer(dataFileCsv)
-    #
-    # count = 0
-    # for data in jsonData:
-    #     if count == 0:
-    #         header = data.keys()
-    #         csvWriter.writerow(header)
-    #         count += 1
-    #         csvWriter.writerow(data.values())
-    # dataFileCsv.close()
-
-
-    # with open(args.fileCSV, 'w', encoding='utf-8', newline='') as csvfile:
-    #     writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=args.delimiter)
-    #     writer.writeheader()
-
