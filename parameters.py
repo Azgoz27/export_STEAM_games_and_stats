@@ -14,5 +14,5 @@ recentlyPlayed = 'IPlayerService/GetRecentlyPlayedGames/v1?'
 gamePageID = '12370'
 gamePageData = 'https://store.steampowered.com/api/appdetails?appids='
 
-# Regex of keywords for HLTB game name search
+# Regex of keywords for HowLongToBeat game name search
 keyWords = 'Single Player|Multi-Player|Multiplayer|&|:|-|Steam|The|Edition|Deluxe|Premium|Complete|HD|Definitive|Anniversary|Enhanced|\(.*?\)$'
