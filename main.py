@@ -19,9 +19,11 @@ def exportJSON(file, name):
 
 # Return review numbers of owned STEAM games
 def getGameReviews(gameID):
-    gameReviews = (requests.get('https://store.steampowered.com/appreviews/'
-                                + gameID
-                                + '?json=1&language=all&purchase_type=all').json())  # &review_type=positive
+    try:
+        gameReviews = requests.get('https://store.steampowered.com/appreviews/' + gameID
+                                    + '?json=1&language=all&purchase_type=all').json()
+    except:
+        return 'Error', 'Error', 'Error', 'Error', 'Error'
     totalVotes = gameReviews['query_summary']['total_reviews']
     if totalVotes == 0:
         return 0, 0, 0, 0, 0
@@ -31,6 +33,49 @@ def getGameReviews(gameID):
         reviewScore = totalPositive / totalVotes
         rating = reviewScore - (reviewScore - 0.5) * math.pow(2, - math.log10(totalVotes + 1))
         return totalVotes, totalPositive, totalNegative, (round(reviewScore * 100)), (round(rating * 100))
+
+def getGameTags(gameID):
+    gameTags = []
+    try:
+        getGameDetails = requests.get(parameters.gamePageData + gameID).json()
+        gameTag = getGameDetails[gameID]['data']['categories']
+        for tag in gameTag:
+            gameTags.append(tag['description'])
+    except:
+        gameTags.append('Page not found')
+    print(gameTags)##################################################################################################
+    return gameTags
+
+def gameTimeRange(gameTime):
+    if gameTime == 'Error':
+        return'Error'
+    elif gameTime == 0:
+        return '0'
+    elif gameTime > 0 and gameTime <= 5:
+        return '5'
+    elif gameTime > 5 and gameTime <= 10:
+        return '10'
+    elif gameTime > 10 and gameTime <= 20:
+        return '20'
+    elif gameTime > 20 and gameTime <= 30:
+        return '30'
+    elif gameTime > 30 and gameTime <= 40:
+        return '40'
+    elif gameTime > 40 and gameTime <= 50:
+        return '50'
+    elif gameTime > 50 and gameTime <= 60:
+        return '60'
+    elif gameTime > 60 and gameTime <= 70:
+        return '70'
+    elif gameTime > 70 and gameTime <= 80:
+        return '80'
+    elif gameTime > 80 and gameTime <= 90:
+        return '90'
+    elif gameTime > 90 and gameTime <= 100:
+        return '100'
+    else: # gameTime > 100:
+        return '100+'
+
 
 # Scrap expected game length times per play style from HowLongToBeat website
 def getHowLongToBeat(name):
@@ -44,11 +89,22 @@ def getHowLongToBeat(name):
         howLongToBeat = HtmlScraper().search(decodeName)[0]
         # TODO Check for multyplayer game times?
         # gameLengths = howLongToBeat.gameplayMain, howLongToBeat.gameplayMainExtra, howLongToBeat.gameplayCompletionist
-        return round(howLongToBeat.gameplayMain), round(howLongToBeat.gameplayMainExtra), \
-               round(howLongToBeat.gameplayCompletionist), decodeName + ' -> ' + howLongToBeat.gameName
+        avgSum = []
+        gameplayMain = round(howLongToBeat.gameplayMain)
+        gameplayExtra = round(howLongToBeat.gameplayMainExtra)
+        gameplayComplete = round(howLongToBeat.gameplayCompletionist)
+        if gameplayMain != 0:
+            avgSum.append(gameplayMain)
+        if gameplayExtra != 0:
+            avgSum.append(gameplayExtra)
+        if gameplayComplete != 0:
+            avgSum.append(gameplayComplete)
+        avgMedian = round(sum(avgSum)/len(avgSum))
+        return gameplayMain, gameplayExtra, gameplayComplete, avgMedian, \
+               decodeName + ' -> ' + howLongToBeat.gameName
     except:
         print("ERROR! ITEM NOT FOUND -> " + decodeName)
-        return 'Error', 'Error', 'Error', decodeName + ' -> NOT FOUND!'
+        return 'Error', 'Error', 'Error', 'Error', decodeName + ' -> NOT FOUND!'
 
 
 def main():
@@ -63,7 +119,9 @@ def main():
     # Get the total count of Steam games
     gamesTotal = ["Total Steam game count: " + str(getOwnedGames['response']['game_count'])]
     rowTags = ['count', 'ID', 'Game Name', 'Steam Playtime(h)', 'Main Story(h)', 'Extra Content(h)', 'Complete(h)',
-               'Total Votes', 'Total Positive', 'Total Negative', 'Score(%)', 'Steam db Score(%)']
+               'Average(h)', 'Total Votes', 'Total Positive', 'Total Negative', 'Score(%)', 'Steam db Score(%)',
+               'Tags',
+               'Story Range(h)', 'Extra Range(h)', 'Complete Range(h)', 'Average Range(h)']
 
     # Get the game IDs, names, total playtime per title, total vote numbers, total positive and negative numbers
     gameItems = []
@@ -79,25 +137,31 @@ def main():
             print('List done: ' + str(newCount) + '%')
         appID = item['appid']
         name = item['name']
+        print(name) ###############################################################################################
         steamMin = item['playtime_forever']
         # Turn total playtime minutes into hours
-        steamTime = str(int(steamMin / 60)) + 'h ' + str(steamMin % 60) + 'min'
-        story, extra, complete, gameName = getHowLongToBeat(name=(str(item['name'])))
+        # steamTime = str(int(steamMin / 60)) + 'h ' + str(steamMin % 60) + 'min'  # use this to get hours and minutes
+        steamTime = str(round(steamMin/60))
+        story, extra, complete, avgMedian, gameName = getHowLongToBeat(name=(str(item['name'])))
         total, positive, negative, score, steamScore = getGameReviews(str(item['appid']))
+        gameTags = getGameTags(str(item['appid']))
         # Form the data
-        gameItems.append([count, appID, name, steamTime, story, extra, complete,
+        gameItems.append([count, appID, name, steamTime,
+                          story, extra, complete, avgMedian,
                           total, positive, negative, score, steamScore,
+                          gameTags,
+                          gameTimeRange(story), gameTimeRange(extra), gameTimeRange(complete), gameTimeRange(avgMedian)
                           ])
         checkList.append(gameName)
 
     # Export to JSON file
-    # exportJSON((gamesTotal, gameItems), name='game_list')
+    exportJSON((rowTags, gameItems), name='game_list')
     exportJSON(checkList, name='check_list')
 
     # Export to CSV file
     with open('steam_catalog_list_data.csv', 'w', encoding='UTF8', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(gamesTotal)
+        # writer.writerow(gamesTotal)
         writer.writerow(rowTags)
         writer.writerows(gameItems)
 
