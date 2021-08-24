@@ -34,6 +34,7 @@ def getGameReviews(gameID):
         rating = reviewScore - (reviewScore - 0.5) * math.pow(2, - math.log10(totalVotes + 1))
         return totalVotes, totalPositive, totalNegative, (round(reviewScore * 100)), (round(rating * 100))
 
+# Get the game tags from the Steam product page
 def getGameTags(gameID):
     gameTags = []
     try:
@@ -43,9 +44,56 @@ def getGameTags(gameID):
             gameTags.append(tag['description'])
     except:
         gameTags.append('Page not found')
-    print(gameTags)##################################################################################################
-    return gameTags
+    finally:
+        return ", ".join(gameTags)
 
+# Scrap expected game length times per play style from HowLongToBeat website
+def getHowLongToBeat(name):
+    # Using checklist to check steam name searches in HowLongToBeat base
+    # Using regex to exclude mismatches between steam and HowLongToBeat game names
+    name = re.sub(parameters.keyWords, ' ', name)
+    # Remove utf-8 coded text for better search results
+    encodeName = name.encode(encoding='ascii', errors='ignore')
+    decodeName = encodeName.decode()
+    try:
+        howLongToBeat = HtmlScraper().search(decodeName)[0]
+        avgSum = []
+        print(howLongToBeat.timeLabels) #############################################################################
+        gameplayMain = round(howLongToBeat.gameplayMain)
+        gameplayExtra = round(howLongToBeat.gameplayMainExtra)
+        gameplayComplete = round(howLongToBeat.gameplayCompletionist)
+        if gameplayMain != 0:
+            avgSum.append(gameplayMain)
+        if gameplayExtra != 0:
+            avgSum.append(gameplayExtra)
+        if gameplayComplete != 0:
+            avgSum.append(gameplayComplete)
+        avgMedian = round(sum(avgSum)/len(avgSum))
+        return gameplayMain, gameplayExtra, gameplayComplete, avgMedian, \
+               decodeName + ' -> ' + howLongToBeat.gameName
+    except:
+        print("ERROR! ITEM NOT FOUND -> " + decodeName)
+        return 'Error', 'Error', 'Error', 'Error', decodeName + ' -> NOT FOUND!'
+
+# Get optional JSON lists for various Steam account statistics
+def optionalLists():
+    # Get the Steam user and badge level
+    getSteamLvl = requests.get(parameters.steamLink + parameters.steamLevel + parameters.steamID
+                               + parameters.steamKey)
+    getBadgeLvl = requests.get(parameters.steamLink + parameters.badgeLevel + parameters.steamID
+                               + parameters.steamKey)
+    exportJSON([getSteamLvl.json(), getBadgeLvl.json()], name='user_level_steam')
+
+    # Get recently played STEAM games
+    getRecentlyPlayed = requests.get(parameters.steamLink + parameters.recentlyPlayed + parameters.steamID
+                                     + parameters.steamKey)
+    exportJSON(getRecentlyPlayed.json(), name='recently_played_steam')
+
+    # Get game's Steam page details
+    getGameDetails = requests.get(parameters.gamePageData + parameters.gamePageID)
+    exportJSON(getGameDetails.json(), name='game_details')
+
+# Rank the game times per length ranking
 def gameTimeRange(gameTime):
     if gameTime == 'Error':
         return'Error'
@@ -76,37 +124,6 @@ def gameTimeRange(gameTime):
     else: # gameTime > 100:
         return '100+'
 
-
-# Scrap expected game length times per play style from HowLongToBeat website
-def getHowLongToBeat(name):
-    # Using checklist to check steam name searches in HowLongToBeat base
-    # Using regex to exclude mismatches between steam and HowLongToBeat game names
-    name = re.sub(parameters.keyWords, ' ', name)
-    # Remove utf-8 coded text for better search results
-    encodeName = name.encode(encoding='ascii', errors='ignore')
-    decodeName = encodeName.decode()
-    try:
-        howLongToBeat = HtmlScraper().search(decodeName)[0]
-        # TODO Check for multyplayer game times?
-        # gameLengths = howLongToBeat.gameplayMain, howLongToBeat.gameplayMainExtra, howLongToBeat.gameplayCompletionist
-        avgSum = []
-        gameplayMain = round(howLongToBeat.gameplayMain)
-        gameplayExtra = round(howLongToBeat.gameplayMainExtra)
-        gameplayComplete = round(howLongToBeat.gameplayCompletionist)
-        if gameplayMain != 0:
-            avgSum.append(gameplayMain)
-        if gameplayExtra != 0:
-            avgSum.append(gameplayExtra)
-        if gameplayComplete != 0:
-            avgSum.append(gameplayComplete)
-        avgMedian = round(sum(avgSum)/len(avgSum))
-        return gameplayMain, gameplayExtra, gameplayComplete, avgMedian, \
-               decodeName + ' -> ' + howLongToBeat.gameName
-    except:
-        print("ERROR! ITEM NOT FOUND -> " + decodeName)
-        return 'Error', 'Error', 'Error', 'Error', decodeName + ' -> NOT FOUND!'
-
-
 def main():
     begin_time = datetime.datetime.now()  # TODO use timeit
 
@@ -134,10 +151,10 @@ def main():
         newCount = int(count / len(gameList) * 100)
         if newCount != oldCount:
             oldCount = newCount
-            print('List done: ' + str(newCount) + '%')
+            print('--->List done: ' + str(newCount) + '%<---')
         appID = item['appid']
         name = item['name']
-        print(name) ###############################################################################################
+        print(count, name) ############################################################################### remove this
         steamMin = item['playtime_forever']
         # Turn total playtime minutes into hours
         # steamTime = str(int(steamMin / 60)) + 'h ' + str(steamMin % 60) + 'min'  # use this to get hours and minutes
@@ -165,22 +182,10 @@ def main():
         writer.writerow(rowTags)
         writer.writerows(gameItems)
 
-    # OPTIONAL: Get the Steam user and badge level
-    getSteamLvl = requests.get(parameters.steamLink + parameters.steamLevel + parameters.steamID + parameters.steamKey)
-    getBadgeLvl = requests.get(parameters.steamLink + parameters.badgeLevel + parameters.steamID + parameters.steamKey)
-    exportJSON([getSteamLvl.json(), getBadgeLvl.json()], name='user_level_steam')
-
-    # OPTIONAL: Get recently played STEAM games
-    getRecentlyPlayed = requests.get(parameters.steamLink + parameters.recentlyPlayed + parameters.steamID
-                                     + parameters.steamKey)
-    exportJSON(getRecentlyPlayed.json(), name='recently_played_steam')
-
-    # OPTIONAL: Get game's Steam page details
-    getGameDetails = requests.get(parameters.gamePageData + parameters.gamePageID)
-    exportJSON(getGameDetails.json(), name='game_details')
-
-    print(datetime.datetime.now() - begin_time)  #TODO use timeit
-
+    print(datetime.datetime.now() - begin_time)  # TODO use timeit
 
 if __name__ == '__main__':
-    main()
+    if parameters.optionalLists:
+        optionalLists()
+    if parameters.mainList:
+        main()
