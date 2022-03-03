@@ -93,7 +93,11 @@ def optionalLists():
     getGameDetails = requests.get(parameters.gamePageData + parameters.gamePageID)
     exportJSON(getGameDetails.json(), name='game_details')
 
-# Rank the game times per length ranking
+    # Get friends list
+    getFriendsList = requests.get(parameters.friendsList + parameters.steamKey + parameters.steamID + '&relationship = friend')
+    exportJSON(getFriendsList.json(), name='friends_list')
+
+    # Rank the game times per length ranking
 def gameTimeRange(gameTime):
     if gameTime == 'Error':
         return'Error'

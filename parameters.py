@@ -13,12 +13,14 @@ badgeLevel = 'IPlayerService/GetBadges/v1?'
 recentlyPlayed = 'IPlayerService/GetRecentlyPlayedGames/v1?'
 gamePageID = '12370'
 gamePageData = 'https://store.steampowered.com/api/appdetails?appids='
+friendsList = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001?'
+
 
 # Create main list, use Bool values
 mainList = True
 
 # Create optional reports, use Bool values
-optionalLists = False
+optionalLists = True
 
 # Regex of keywords for HowLongToBeat game name search
 keyWords = 'Single Player|Multi-Player|Multiplayer|&|:|-|Steam|The|Edition|Deluxe|Premium|Complete|HD|Definitive|Anniversary|Enhanced|\(.*?\)$'
