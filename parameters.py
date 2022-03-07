@@ -14,7 +14,7 @@ recentlyPlayed = 'IPlayerService/GetRecentlyPlayedGames/v1?'
 gamePageID = '12370'
 gamePageData = 'https://store.steampowered.com/api/appdetails?appids='
 friendsList = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001?'
-
+playerSummaries = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?'
 
 # Create main list, use Bool values
 mainList = True

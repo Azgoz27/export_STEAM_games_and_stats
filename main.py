@@ -95,7 +95,17 @@ def optionalLists():
 
     # Get friends list
     getFriendsList = requests.get(parameters.friendsList + parameters.steamKey + parameters.steamID + '&relationship = friend')
-    exportJSON(getFriendsList.json(), name='friends_list')
+    steamFriendIDList = []
+    friends = getFriendsList.json()['friendslist']['friends']
+    for ID in friends:
+        steamFriendIDList.append(ID['steamid'])
+    listID = ','.join(steamFriendIDList)
+    getPlayerSummaries = (requests.get(parameters.playerSummaries + parameters.steamKey + '&steamids=' + listID))
+    steamFriendNames = []
+    playerNames = getPlayerSummaries.json()['response']['players']
+    for name in playerNames:
+        steamFriendNames.append(name['personaname'])
+    exportJSON(steamFriendNames, name='friends_list')
 
     # Rank the game times per length ranking
 def gameTimeRange(gameTime):
