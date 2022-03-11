@@ -93,6 +93,7 @@ def optionalLists():
     getGameDetails = requests.get(parameters.gamePageData + parameters.gamePageID)
     exportJSON(getGameDetails.json(), name='game_details')
 
+def friendsList():
     # Get Steam friends list names
     getFriendsList = requests.get(parameters.friendsList + parameters.steamKey + parameters.steamID + '&relationship = friend')
     steamFriendIDList = []
@@ -103,18 +104,26 @@ def optionalLists():
 
     # Get Steam friends list IDs
     getPlayerSummaries = (requests.get(parameters.playerSummaries + parameters.steamKey + '&steamids=' + listID))
-    steamFriendNames = {}
+    steamFriendNameID = {}
     playerNames = getPlayerSummaries.json()['response']['players']
     for name in playerNames:
-        steamFriendNames[name['personaname']] = name['steamid']
-    exportJSON(steamFriendNames, name='friends_list')
+        steamFriendNameID[name['personaname']] = name['steamid']
+    exportJSON(steamFriendNameID, name='friends_ids')
 
-    # Get Steam friends library
-    for id in steamFriendNames:
+    # Get Steam friends libraries
+    steamFriendLibrary = steamFriendNameID
+    for id in steamFriendLibrary:
         getFriendGames = (requests.get(parameters.steamLink + parameters.ownedGames + parameters.steamKey
-                                      + '&steamid=' + steamFriendNames[id] + parameters.textFormat + parameters.appInfo
+                                      + '&steamid=' + steamFriendNameID[id] + parameters.textFormat + parameters.appInfo
                                       + parameters.freeGames)).json()
-        exportJSON(getFriendGames, name=id +'_owned_games_steam')
+
+        for friendName in steamFriendLibrary:
+            if friendName == id:
+                steamFriendLibrary[friendName] = getFriendGames
+
+    exportJSON(steamFriendLibrary, name='friends_owned_games_steam')
+    return steamFriendLibrary
+
 
     # Rank the game times per length ranking
 def gameTimeRange(gameTime):
@@ -160,7 +169,7 @@ def main():
     gamesTotal = ["Total Steam game count: " + str(getOwnedGames['response']['game_count'])]
     rowTags = ['count', 'ID', 'Game Name', 'Steam Playtime(h)', 'Main Story(h)', 'Extra Content(h)', 'Complete(h)',
                'Average(h)', 'Total Votes', 'Total Positive', 'Total Negative', 'Score(%)', 'Steam db Score(%)',
-               'Tags',
+               'Tags', 'Friends',
                'Story Range(h)', 'Extra Range(h)', 'Complete Range(h)', 'Average Range(h)']
 
     # Get the game IDs, names, total playtime per title, total vote numbers, total positive and negative numbers
@@ -184,6 +193,8 @@ def main():
         steamTime = str(round(steamMin/60))
         story, extra, complete, avgMedian, gameName = getHowLongToBeat(name=(str(item['name'])))
         total, positive, negative, score, steamScore = getGameReviews(str(item['appid']))
+
+        friendsLibrary = friendsList()
         gameTags = getGameTags(str(item['appid']))
         # Form the data
         gameItems.append([count, appID, name, steamTime,
