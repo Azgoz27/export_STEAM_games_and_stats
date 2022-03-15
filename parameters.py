@@ -22,5 +22,11 @@ mainList = True
 # Create optional reports, use Bool values
 optionalLists = True
 
+# Fetch Steam friends library
+fetchFriendsList = True
+
+# Iterate through Steam Friends library
+checkFriendsList = True
+
 # Regex of keywords for HowLongToBeat game name search
 keyWords = 'Single Player|Multi-Player|Multiplayer|&|:|-|Steam|The|Edition|Deluxe|Premium|Complete|HD|Definitive|Anniversary|Enhanced|\(.*?\)$'

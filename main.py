@@ -124,7 +124,6 @@ def friendsList():
     exportJSON(steamFriendLibrary, name='friends_owned_games_steam')
     return steamFriendLibrary
 
-
     # Rank the game times per length ranking
 def gameTimeRange(gameTime):
     if gameTime == 'Error':
@@ -177,6 +176,9 @@ def main():
     checkList = []
     gameList = (getOwnedGames['response']['games'])
     oldCount = 0
+    # Fetch friends steam libraries
+    if parameters.fetchFriendsList:
+        friendsLibrary = friendsList()
     print("Going through the user's Steam library")
     for count, item in enumerate(gameList, 1):
         # Show the progress of the list done in percentage till 100%
@@ -193,14 +195,30 @@ def main():
         steamTime = str(round(steamMin/60))
         story, extra, complete, avgMedian, gameName = getHowLongToBeat(name=(str(item['name'])))
         total, positive, negative, score, steamScore = getGameReviews(str(item['appid']))
-
-        friendsLibrary = friendsList()
+        # Iterate through friends library and check for matching game IDs
+        if parameters.checkFriendsList:
+            friends = []
+            #f = open('friends_owned_games_steam_data.json')
+            # friendsLibrary = json.load(f)
+            for friendName in friendsLibrary.items():
+                if friendName[0] != "Shara": # Shara's list is empty
+                        try:
+                            gamesList = friendName[1]['response']['games']
+                            for app in gamesList:
+                                if appID == app['appid']:
+                                    friends.append(friendName[0])
+                                    break
+                        except:
+                            print("ERROR: " + friendName[0] + " games list not found!")
+            friendTags = ','.join(friends)
+        else:
+            friendTags = ''
         gameTags = getGameTags(str(item['appid']))
         # Form the data
         gameItems.append([count, appID, name, steamTime,
                           story, extra, complete, avgMedian,
                           total, positive, negative, score, steamScore,
-                          gameTags,
+                          gameTags, friendTags,
                           gameTimeRange(story), gameTimeRange(extra), gameTimeRange(complete), gameTimeRange(avgMedian)
                           ])
         checkList.append(gameName)
@@ -216,6 +234,7 @@ def main():
         writer.writerow(rowTags)
         writer.writerows(gameItems)
 
+    print(gamesTotal)
     print(datetime.datetime.now() - begin_time)  # TODO use timeit
 
 if __name__ == '__main__':
