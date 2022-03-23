@@ -58,7 +58,7 @@ def getHowLongToBeat(name):
     try:
         howLongToBeat = HtmlScraper().search(decodeName)[0]
         avgSum = []
-        print(howLongToBeat.timeLabels) #############################################################################
+        print(howLongToBeat.timeLabels) ################ remove this
         gameplayMain = round(howLongToBeat.gameplayMain)
         gameplayExtra = round(howLongToBeat.gameplayMainExtra)
         gameplayComplete = round(howLongToBeat.gameplayCompletionist)
@@ -188,7 +188,7 @@ def main():
             print('--->List done: ' + str(newCount) + '%<---')
         appID = item['appid']
         name = item['name']
-        print(count, name) ############################################################################### remove this
+        print(count, name) ################ remove this
         steamMin = item['playtime_forever']
         # Turn total playtime minutes into hours
         # steamTime = str(int(steamMin / 60)) + 'h ' + str(steamMin % 60) + 'min'  # use this to get hours and minutes
