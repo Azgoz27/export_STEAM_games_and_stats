@@ -58,7 +58,7 @@ def getHowLongToBeat(name):
     try:
         howLongToBeat = HtmlScraper().search(decodeName)[0]
         avgSum = []
-        print(howLongToBeat.timeLabels) ################ remove this
+        print(howLongToBeat.timeLabels) ################# remove this
         gameplayMain = round(howLongToBeat.gameplayMain)
         gameplayExtra = round(howLongToBeat.gameplayMainExtra)
         gameplayComplete = round(howLongToBeat.gameplayCompletionist)
